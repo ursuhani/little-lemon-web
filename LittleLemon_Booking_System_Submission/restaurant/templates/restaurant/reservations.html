@@ -1,0 +1,12 @@
+{% extends "restaurant/base.html" %}
+{% block title %}All Reservations | Little Lemon{% endblock %}
+{% block content %}
+<h1>All Reservations</h1>
+<p>Reservation data is available as JSON below and through <code>/bookings/</code>.</p>
+<pre id="reservations-json">{{ reservations_json }}</pre>
+{% if reservations %}
+<table><thead><tr><th>Name</th><th>Date</th><th>Time</th></tr></thead><tbody>
+{% for item in reservations %}<tr><td>{{ item.name }}</td><td>{{ item.reservation_date|date:"Y-m-d" }}</td><td>{{ item.reservation_slot }}:00</td></tr>{% endfor %}
+</tbody></table>
+{% else %}<p>No reservations have been made yet.</p>{% endif %}
+{% endblock %}

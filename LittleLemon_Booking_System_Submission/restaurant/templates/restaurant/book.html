@@ -1,0 +1,46 @@
+{% extends "restaurant/base.html" %}
+{% block title %}Make a reservation | Little Lemon{% endblock %}
+{% block content %}
+<div class="form-wrap">
+  <h1>Make a reservation</h1>
+  <p>Choose a date and available time for your visit.</p>
+  <form method="post" id="booking-form">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="error">{{ form.non_field_errors }}</div>{% endif %}
+    <label for="{{ form.name.id_for_label }}">Name</label>{{ form.name }}{{ form.name.errors }}
+    <label for="reservation_date">Reservation date</label>{{ form.reservation_date }}{{ form.reservation_date.errors }}
+    <label for="reservation_slot">Reservation time</label>{{ form.reservation_slot }}{{ form.reservation_slot.errors }}
+    <p class="help">Reservations are available from 10:00 to 20:00. One booking per time slot each day.</p>
+    <button class="btn" type="submit">Reserve</button>
+  </form>
+  <div class="slot-note" style="margin-top:18px"><strong>Bookings for this date</strong><div id="booked-list" class="help">Loading available times…</div></div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+(function(){
+ const dateInput=document.getElementById('reservation_date');
+ const slotSelect=document.getElementById('reservation_slot');
+ const bookedList=document.getElementById('booked-list');
+ const today=new Date(); const localToday=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+ dateInput.min=localToday;
+ if(!dateInput.value) dateInput.value=localToday;
+ async function refreshSlots(){
+   if(!dateInput.value) return;
+   try {
+     const response=await fetch('/bookings/?date='+encodeURIComponent(dateInput.value));
+     const bookings=await response.json();
+     const booked=bookings.map(b=>Number(b.reservation_slot));
+     for(const option of slotSelect.options){
+       if(!option.value) continue;
+       const hour=Number(option.value);
+       option.disabled=booked.includes(hour);
+       option.textContent=hour+':00'+(booked.includes(hour)?' — Booked':'');
+     }
+     bookedList.textContent=booked.length ? booked.map(h=>h+':00').join(', ')+' already booked.' : 'No reservations yet. All time slots are available.';
+   } catch(e) { bookedList.textContent='Could not load current bookings. Please refresh the page.'; }
+ }
+ dateInput.addEventListener('change',refreshSlots); refreshSlots();
+})();
+</script>
+{% endblock %}
